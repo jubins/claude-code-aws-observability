@@ -1,0 +1,17 @@
+# Secrets and local configuration. Never commit these.
+.env
+.env.aws
+.env.*.local
+*.pem
+*.key
+.aws/
+
+# Files generated from templates by scripts/ (they contain your account ID and Region)
+*.rendered.json
+
+# Local state and tooling
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

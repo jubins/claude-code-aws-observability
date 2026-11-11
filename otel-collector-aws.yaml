@@ -1,0 +1,67 @@
+# Stage 2: local Prometheus plus AWS. Metrics also go to Amazon Managed Service for Prometheus
+# (SigV4 remote write). Log events go to CloudWatch Logs.
+extensions:
+  sigv4auth:
+    region: ${env:AWS_REGION}
+    service: aps
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  deltatocumulative: {}
+  batch:
+    timeout: 5s
+
+  # Flatten names and fix types so Logs Insights can filter and aggregate without backticks.
+  # error_mode: ignore skips a statement when its attribute is missing (tool_result has no cost_usd).
+  transform/claude_logs:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["event_name"], attributes["event.name"]) where attributes["event.name"] != nil
+          - replace_pattern(attributes["event_name"], "^claude_code\\.", "") where attributes["event_name"] != nil
+          - set(attributes["session_id"], attributes["session.id"]) where attributes["session.id"] != nil
+          - set(attributes["prompt_id"], attributes["prompt.id"]) where attributes["prompt.id"] != nil
+          - set(attributes["cost_usd"], Double(attributes["cost_usd"])) where attributes["cost_usd"] != nil
+          - set(attributes["duration_ms"], Double(attributes["duration_ms"])) where attributes["duration_ms"] != nil
+          - set(attributes["input_tokens"], Int(attributes["input_tokens"])) where attributes["input_tokens"] != nil
+          - set(attributes["output_tokens"], Int(attributes["output_tokens"])) where attributes["output_tokens"] != nil
+          - set(attributes["cache_read_tokens"], Int(attributes["cache_read_tokens"])) where attributes["cache_read_tokens"] != nil
+          - set(attributes["cache_creation_tokens"], Int(attributes["cache_creation_tokens"])) where attributes["cache_creation_tokens"] != nil
+
+exporters:
+  # Local: Prometheus scrapes this endpoint, Grafana reads Prometheus.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+  # Team view, metrics: Amazon Managed Service for Prometheus.
+  prometheusremotewrite/amp:
+    endpoint: ${env:AMP_REMOTE_WRITE_URL}
+    auth:
+      authenticator: sigv4auth
+
+  # Team view, events: CloudWatch Logs. The exporter creates the log group and stream if missing.
+  awscloudwatchlogs:
+    region: ${env:AWS_REGION}
+    log_group_name: claude-code-events
+    log_stream_name: ${env:LOG_STREAM_NAME}
+    log_retention: 30
+
+service:
+  extensions: [sigv4auth]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [deltatocumulative, batch]
+      exporters: [prometheus, prometheusremotewrite/amp]
+    logs:
+      receivers: [otlp]
+      processors: [transform/claude_logs, batch]
+      exporters: [awscloudwatchlogs]

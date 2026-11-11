@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteMetricsToAmp",
+      "Effect": "Allow",
+      "Action": "aps:RemoteWrite",
+      "Resource": "arn:aws:aps:__REGION__:__ACCOUNT_ID__:workspace/__AMP_WORKSPACE_ID__"
+    },
+    {
+      "Sid": "WriteEventsToCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams",
+        "logs:PutRetentionPolicy"
+      ],
+      "Resource": [
+        "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events",
+        "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events:*"
+      ]
+    }
+  ]
+}

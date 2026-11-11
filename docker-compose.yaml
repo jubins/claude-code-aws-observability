@@ -1,0 +1,49 @@
+# Requires Docker Compose v2.24 or later (optional env_file entries).
+services:
+  otel-collector:
+    image: ${OTELCOL_IMAGE:-otel/opentelemetry-collector-contrib:latest}
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AMP_REMOTE_WRITE_URL: ${AMP_REMOTE_WRITE_URL:-}
+      LOG_STREAM_NAME: ${LOG_STREAM_NAME:-dev-laptop}
+    # Temporary AWS credentials, written by scripts/refresh-aws-creds.sh. Absent in the local-only stage.
+    env_file:
+      - path: .env.aws
+        required: false
+    volumes:
+      - ./${COLLECTOR_CONFIG:-otel-collector-local.yaml}:/etc/otelcol/config.yaml:ro
+    ports:
+      # Bound to loopback so only this machine can send telemetry to the collector.
+      - 127.0.0.1:4317:4317
+      - 127.0.0.1:4318:4318
+
+  prometheus:
+    image: prom/prometheus:latest
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - 127.0.0.1:9090:9090
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    environment:
+      # Anonymous admin is acceptable only because the port below is bound to loopback.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

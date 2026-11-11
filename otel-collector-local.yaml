@@ -1,0 +1,31 @@
+# Stage 1: local only. Metrics go to Prometheus, log events are printed to the collector log.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # The Prometheus exporter serves cumulative counters. This processor converts delta sums.
+  deltatocumulative: {}
+  batch:
+    timeout: 5s
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [deltatocumulative, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

@@ -1,0 +1,487 @@
+{
+  "uid": "claude-code-agents-team",
+  "title": "Claude Code agents (team)",
+  "tags": [
+    "claude-code"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": {
+    "from": "now-14d",
+    "to": "now"
+  },
+  "refresh": "",
+  "templating": {
+    "list": [
+      {
+        "name": "ds_amp",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "hide": 0,
+        "refresh": 1,
+        "current": {}
+      },
+      {
+        "name": "ds_logs",
+        "label": "Logs",
+        "type": "datasource",
+        "query": "cloudwatch",
+        "hide": 0,
+        "refresh": 1,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Cost, 14 days (Prometheus)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${ds_amp}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_amp}"
+          },
+          "expr": "sum(increase(claude_code_cost_usage_USD_total[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Tokens, 14 days (Prometheus)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${ds_amp}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_amp}"
+          },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Sessions, 14 days (Prometheus)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${ds_amp}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_amp}"
+          },
+          "expr": "sum(increase(claude_code_session_count_total[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Tool failure rate (Logs Insights)",
+      "description": "Share of tool_result events with success = false.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${ds_logs}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${ds_logs}"
+          },
+          "refId": "A",
+          "queryMode": "Logs",
+          "queryLanguage": "CWLI",
+          "region": "default",
+          "id": "",
+          "expression": "filter attributes.event_name = \"tool_result\"\n| fields strcontains(attributes.success, \"false\") as failed\n| stats avg(failed) as failure_rate",
+          "logGroups": [
+            {
+              "arn": "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events:*",
+              "name": "claude-code-events"
+            }
+          ],
+          "statsGroups": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Cost per day by model (Managed Service for Prometheus)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${ds_amp}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_amp}"
+          },
+          "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total[1d]))",
+          "legendFormat": "{{model}}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 25,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Cost by query source (Managed Service for Prometheus)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${ds_amp}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_amp}"
+          },
+          "expr": "sum by (query_source) (increase(claude_code_cost_usage_USD_total[1d]))",
+          "legendFormat": "{{query_source}}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 25,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Tool reliability (CloudWatch Logs Insights)",
+      "description": "",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${ds_logs}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${ds_logs}"
+          },
+          "refId": "A",
+          "queryMode": "Logs",
+          "queryLanguage": "CWLI",
+          "region": "default",
+          "id": "",
+          "expression": "filter attributes.event_name = \"tool_result\"\n| fields strcontains(attributes.success, \"false\") as failed\n| stats count(*) as calls, sum(failed) as failures, pct(attributes.duration_ms, 95) as p95_ms by attributes.tool_name\n| sort calls desc\n| limit 20",
+          "logGroups": [
+            {
+              "arn": "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events:*",
+              "name": "claude-code-events"
+            }
+          ],
+          "statsGroups": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 8,
+        "h": 9
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Most expensive sessions (Logs Insights)",
+      "description": "",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${ds_logs}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${ds_logs}"
+          },
+          "refId": "A",
+          "queryMode": "Logs",
+          "queryLanguage": "CWLI",
+          "region": "default",
+          "id": "",
+          "expression": "filter attributes.event_name = \"api_request\"\n| fields strcontains(attributes.query_source, \"subagent\") as is_subagent\n| stats sum(attributes.cost_usd) as cost_usd, count(*) as requests, sum(is_subagent) as subagent_requests by attributes.session_id\n| sort cost_usd desc\n| limit 10",
+          "logGroups": [
+            {
+              "arn": "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events:*",
+              "name": "claude-code-events"
+            }
+          ],
+          "statsGroups": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 13,
+        "w": 8,
+        "h": 9
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Cache hit ratio per day (Logs Insights)",
+      "description": "cacheRead / (cacheRead + cacheCreation + fresh input).",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${ds_logs}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${ds_logs}"
+          },
+          "refId": "A",
+          "queryMode": "Logs",
+          "queryLanguage": "CWLI",
+          "region": "default",
+          "id": "",
+          "expression": "filter attributes.event_name = \"api_request\"\n| stats sum(attributes.cache_read_tokens) as cache_read, sum(attributes.cache_creation_tokens) as cache_creation, sum(attributes.input_tokens) as fresh_input by bin(1d)\n| fields bin(1d), cache_read / (cache_read + cache_creation + fresh_input) as cache_hit_ratio",
+          "logGroups": [
+            {
+              "arn": "arn:aws:logs:__REGION__:__ACCOUNT_ID__:log-group:claude-code-events:*",
+              "name": "claude-code-events"
+            }
+          ],
+          "statsGroups": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 13,
+        "w": 8,
+        "h": 9
+      }
+    }
+  ]
+}
